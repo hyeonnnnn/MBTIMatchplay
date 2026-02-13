@@ -51,9 +51,9 @@ def calculate_grade(mbti: str, tags: list) -> tuple:
     match_count = sum(1 for tag in tags if tag in mbti_letters)
 
     if match_count >= 3:
-        return ("good", 20)
+        return ("good", 30)
     elif match_count == 2:
-        return ("ok", 5)
+        return ("ok", 10)
     else:
         return ("bad", -10)
 
@@ -150,7 +150,7 @@ def render_start_screen():
     st.markdown("---")
 
     # Player name
-    st.subheader("당신의 이름은?")
+    st.subheader("당신의 이름은? (성 제외)")
     player_name = st.text_input("이름", key="input_name", placeholder="이름을 입력하세요")
 
     st.markdown("---")
@@ -233,7 +233,7 @@ def render_start_screen():
         st.session_state.current_expression = "neutral"
 
         # Generate character images
-        with st.spinner("캐릭터를 생성하고 있습니다... 잠시만 기다려주세요 🎨"):
+        with st.spinner("당신의 이상형을 생성하고 있습니다... 잠시만 기다려주세요 🎨"):
             images = generate_character_images(
                 st.session_state.appearance_prefs,
                 selected_mbti
@@ -282,8 +282,11 @@ def render_game_screen():
     question = questions[q_idx]
     player_name = st.session_state.player_name
 
-    # Add player name to question
-    question_text = f"{player_name}야, {question['q']}"
+    # Add player name to question with random suffix (fixed per question)
+    if st.session_state.get("current_suffix_idx") != st.session_state.current_q_idx:
+        st.session_state.current_suffix = random.choice(["..", "!", "~"])
+        st.session_state.current_suffix_idx = st.session_state.current_q_idx
+    question_text = f"{player_name}{st.session_state.current_suffix} {question['q']}"
     st.subheader(f"Q{st.session_state.current_q_idx + 1}. {question_text}")
 
     # Show AI response if available
@@ -310,8 +313,8 @@ def render_game_screen():
                 st.session_state.screen = "ending"
                 st.session_state.ending_type = "success"
             elif st.session_state.current_q_idx >= st.session_state.get("total_questions", 12):
-                # Game finished without extreme affection
-                if st.session_state.affection >= 50:
+                # Game finished - check final affection
+                if st.session_state.affection >= 80:
                     st.session_state.screen = "ending"
                     st.session_state.ending_type = "success"
                 else:
